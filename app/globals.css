@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: #FFFDF8;
+    --color-text: #100A08;
+    --font-mono: 'Fragment Mono', monospace;
+    --font-script: 'Pinyon Script', cursive;
+    --grid-columns: 4;
+    --grid-gap: 15px;
+    --image-width: 433px;
+    --image-height: 541px;
+    --page-margin: 71px;
+    --header-top: 46px;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased font-mono text-base;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
