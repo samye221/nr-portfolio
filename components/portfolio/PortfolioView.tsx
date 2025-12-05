@@ -23,6 +23,8 @@ export function PortfolioView({ images, initialImageId }: PortfolioViewProps) {
       id: img.id,
       secure_url: img.secure_url,
       alt: img.projectTitle,
+      projectSlug: img.projectSlug,
+      projectTitle: img.projectTitle,
     })),
     [images]
   )

@@ -5,6 +5,9 @@ import Image from 'next/image'
 import { generateBlurDataUrl, optimizeGalleryUrl } from '@/lib/cloudinary'
 import { GALLERY, ELEMENT_IDS } from '@/lib/gallery.constants'
 import { useCursor } from '@/components/cursor/CursorContext'
+import { FavoriteButton } from '@/components/favorites/FavoriteButton'
+import { PinterestSaveButton } from '@/components/pinterest/PinterestSaveButton'
+import { SITE } from '@/lib/constants'
 
 export interface ImageCredits {
   title?: string
@@ -17,6 +20,8 @@ export interface GalleryImage {
   alt: string
   caption?: string
   metadata?: ImageCredits
+  projectSlug: string
+  projectTitle: string
 }
 
 interface GalleryProps {
@@ -188,6 +193,21 @@ export function Gallery({
               )}
             </div>
           )}
+          <div className="absolute bottom-4 right-4 z-40 flex items-center gap-2">
+            <PinterestSaveButton
+              imageUrl={currentImage.secure_url}
+              pageUrl={`${SITE.url}${buildUrl(currentImage.id)}`}
+              description={`${currentImage.projectTitle} - Photography by ${SITE.name}`}
+            />
+            <FavoriteButton
+              image={{
+                id: currentImage.id,
+                secure_url: currentImage.secure_url,
+                projectSlug: currentImage.projectSlug,
+                projectTitle: currentImage.projectTitle,
+              }}
+            />
+          </div>
         </div>
       </div>
     </>

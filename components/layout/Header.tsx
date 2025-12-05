@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useCursor } from '@/components/cursor/CursorContext'
+import { LightboxLink } from '@/components/favorites/LightboxLink'
 
 type HeaderProps =
   | { view: 'projects' | 'portfolio'; onClose?: never }
@@ -62,12 +63,15 @@ export function Header(props: HeaderProps) {
       <nav aria-label="Main navigation">
         <span className="italic">{renderLeft()}</span>
       </nav>
-      <Link
-        href="mailto:contact@nathanrobin.fr"
-        className="transition-opacity hover:opacity-60"
-      >
-        contact
-      </Link>
+      <nav className="flex items-center gap-4" aria-label="Actions">
+        <LightboxLink />
+        <Link
+          href="mailto:contact@nathanrobin.fr"
+          className="transition-opacity hover:opacity-60"
+        >
+          contact
+        </Link>
+      </nav>
     </header>
   )
 }

@@ -44,8 +44,10 @@ export function GalleryView({ images, initialImageId, projectSlug, projectTitle 
       alt: projectTitle,
       caption: img.context?.custom?.caption,
       metadata: buildMetadata(img.context),
+      projectSlug,
+      projectTitle,
     })),
-    [images, projectTitle]
+    [images, projectSlug, projectTitle]
   )
 
   const buildUrl = useCallback((imageId: string) => `/${projectSlug}/${imageId}`, [projectSlug])

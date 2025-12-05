@@ -70,3 +70,11 @@ export interface PortfolioImage {
   width: number
   height: number
 }
+
+export interface FavoriteImage {
+  id: string
+  secure_url: string
+  projectSlug: string
+  projectTitle: string
+  addedAt: number
+}

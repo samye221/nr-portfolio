@@ -5,6 +5,7 @@ import './globals.css'
 import { CacheButton } from '@/components/admin/CacheButton'
 import { CursorProvider } from '@/components/cursor/CursorContext'
 import { CustomCursor } from '@/components/cursor/CustomCursor'
+import { FavoritesProvider } from '@/components/favorites/FavoritesContext'
 import { SITE } from '@/lib/constants'
 import { getCloudinaryUrl } from '@/lib/cloudinary'
 
@@ -105,11 +106,13 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <CursorProvider>
-          <CustomCursor />
-          {children}
-          <Suspense fallback={null}>
-            <CacheButton />
-          </Suspense>
+          <FavoritesProvider>
+            <CustomCursor />
+            {children}
+            <Suspense fallback={null}>
+              <CacheButton />
+            </Suspense>
+          </FavoritesProvider>
         </CursorProvider>
       </body>
     </html>
