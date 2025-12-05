@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
+import { useGalleryContext } from './GalleryContext'
 import { LAYOUT } from '@/lib/gallery.constants'
 
 interface UseGalleryCloseOptions {
@@ -18,9 +19,15 @@ export function useGalleryClose({
   gridElementId,
   closeRedirectUrl,
 }: UseGalleryCloseOptions): UseGalleryCloseReturn {
+  const { isVisible, isFadingOut, closeGallery, setFadingOut } = useGalleryContext()
   const [isClosing, setIsClosing] = useState(false)
-  const [isVisible, setIsVisible] = useState(true)
-  const [isFadingOut, setIsFadingOut] = useState(false)
+  const observerRef = useRef<IntersectionObserver | null>(null)
+
+  useEffect(() => {
+    if (isVisible) {
+      setIsClosing(false)
+    }
+  }, [isVisible])
 
   const handleClose = useCallback(() => {
     if (isClosing) return
@@ -35,27 +42,42 @@ export function useGalleryClose({
   useEffect(() => {
     if (!isClosing) return
 
-    const checkScrollComplete = () => {
-      const grid = document.getElementById(gridElementId)
-      if (!grid) return
+    const grid = document.getElementById(gridElementId)
+    if (!grid) return
 
-      const gridRect = grid.getBoundingClientRect()
+    const rootMargin = `-${LAYOUT.HEADER_HEIGHT}px 0px 0px 0px`
 
-      if (gridRect.top <= LAYOUT.HEADER_HEIGHT + LAYOUT.SCROLL_TOLERANCE) {
-        setIsFadingOut(true)
+    let scrollEndTimer: ReturnType<typeof setTimeout> | null = null
 
-        setTimeout(() => {
-          setIsVisible(false)
-          window.history.replaceState(null, '', closeRedirectUrl)
-          window.scrollTo({ top: 0, behavior: 'instant' })
-        }, LAYOUT.FADE_DURATION)
-      } else {
-        requestAnimationFrame(checkScrollComplete)
-      }
+    const handleScrollEnd = () => {
+      if (scrollEndTimer) clearTimeout(scrollEndTimer)
+      scrollEndTimer = setTimeout(() => {
+        window.history.replaceState(null, '', closeRedirectUrl)
+        closeGallery()
+        setIsClosing(false)
+        window.scrollTo({ top: 0, behavior: 'instant' })
+      }, 50)
     }
 
-    requestAnimationFrame(checkScrollComplete)
-  }, [isClosing, gridElementId, closeRedirectUrl])
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          observerRef.current?.disconnect()
+          window.addEventListener('scroll', handleScrollEnd, { passive: true })
+          handleScrollEnd()
+        }
+      },
+      { rootMargin, threshold: 0 }
+    )
+
+    observerRef.current.observe(grid)
+
+    return () => {
+      observerRef.current?.disconnect()
+      window.removeEventListener('scroll', handleScrollEnd)
+      if (scrollEndTimer) clearTimeout(scrollEndTimer)
+    }
+  }, [isClosing, gridElementId, closeRedirectUrl, closeGallery, setFadingOut])
 
   return { isVisible, isFadingOut, handleClose }
 }

@@ -1,5 +1,5 @@
 import { redirect, notFound } from 'next/navigation'
-import { getProject, extractImageId } from '@/lib/services/project.service'
+import { getProject, extractImageId, normalizeSlug } from '@/lib/services/project.service'
 
 interface ProjectPageProps {
   params: Promise<{ slug: string }>
@@ -7,7 +7,7 @@ interface ProjectPageProps {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { slug: rawSlug } = await params
-  const slug = decodeURIComponent(rawSlug).normalize('NFC')
+  const slug = normalizeSlug(rawSlug)
   const project = await getProject(slug)
 
   if (!project) {

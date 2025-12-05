@@ -1,26 +1,31 @@
 'use client'
 
-import type { ProjectSummary } from '@/types/cloudinary'
+import type { ProjectWithImages } from '@/types/cloudinary'
 import { ImageCard } from '@/components/gallery/ImageCard'
 
 interface ProjectCardProps {
-  project: ProjectSummary
+  project: ProjectWithImages
+  priority?: boolean
 }
 
-export function ProjectCard({ project }: ProjectCardProps) {
-  if (!project.coverUrl) return null
+/**
+ * Desktop project card showing the cover image.
+ * Links to the gallery view of the first image.
+ */
+export function ProjectCard({ project, priority = false }: ProjectCardProps) {
+  const firstImage = project.images[0]
+  if (!firstImage) return null
 
-  const href = project.firstImageId
-    ? `/${project.slug}/${project.firstImageId}`
-    : `/${project.slug}`
+  const href = `/${project.slug}/${firstImage.id}`
 
   return (
     <ImageCard
       href={href}
-      src={project.coverUrl}
+      src={firstImage.url}
       alt={project.title}
       title={project.title}
       aspectRatio="card"
+      priority={priority}
     />
   )
 }

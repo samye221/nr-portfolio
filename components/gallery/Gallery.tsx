@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { generateBlurDataUrl, optimizeGalleryUrl } from '@/lib/cloudinary'
+import { generateBlurDataUrl } from '@/lib/cloudinary'
 import { GALLERY, ELEMENT_IDS } from '@/lib/gallery.constants'
 import { useCursor } from '@/components/cursor/CursorContext'
-import { FavoriteButton } from '@/components/favorites/FavoriteButton'
-import { PinterestSaveButton } from '@/components/pinterest/PinterestSaveButton'
-import { SITE } from '@/lib/constants'
+import { ImageCaption } from './ImageCaption'
+import { useImagePreloader } from './useImagePreloader'
 
 export interface ImageCredits {
   title?: string
@@ -32,6 +31,9 @@ interface GalleryProps {
   closeLabel?: string
 }
 
+const SWIPE_THRESHOLD = 50
+const TRANSITION_DURATION = 300
+
 export function Gallery({
   images,
   initialImageId,
@@ -39,11 +41,14 @@ export function Gallery({
   onClose,
   closeLabel = 'Close',
 }: GalleryProps) {
-  const { setVariant, setTheme } = useCursor()
+  const { setVariant } = useCursor()
   const initialIndex = images.findIndex(img => img.id === initialImageId)
   const [currentIndex, setCurrentIndex] = useState(initialIndex >= 0 ? initialIndex : 0)
+  const [displayIndex, setDisplayIndex] = useState(initialIndex >= 0 ? initialIndex : 0)
+  const [fadeIn, setFadeIn] = useState(true)
+  const touchStartX = useRef<number | null>(null)
 
-  const currentImage = images[currentIndex]
+  const displayImage = images[displayIndex]
   const isFirstImage = currentIndex === 0
   const isLastImage = currentIndex === images.length - 1
 
@@ -51,68 +56,66 @@ export function Gallery({
     window.history.replaceState(null, '', buildUrl(imageId))
   }, [buildUrl])
 
+  const transitionTo = useCallback((newIndex: number) => {
+    if (!fadeIn) return
+    setFadeIn(false)
+    setTimeout(() => {
+      setCurrentIndex(newIndex)
+      setDisplayIndex(newIndex)
+      updateUrl(images[newIndex].id)
+      setFadeIn(true)
+    }, TRANSITION_DURATION / 2)
+  }, [fadeIn, images, updateUrl])
+
   const goToPrevious = useCallback(() => {
-    if (isFirstImage) return
-    const newIndex = currentIndex - 1
-    setCurrentIndex(newIndex)
-    updateUrl(images[newIndex].id)
-  }, [currentIndex, isFirstImage, images, updateUrl])
+    if (isFirstImage || !fadeIn) return
+    transitionTo(currentIndex - 1)
+  }, [currentIndex, isFirstImage, fadeIn, transitionTo])
 
   const goToNext = useCallback(() => {
+    if (!fadeIn) return
     if (isLastImage) {
       onClose?.()
       return
     }
-    const newIndex = currentIndex + 1
-    setCurrentIndex(newIndex)
-    updateUrl(images[newIndex].id)
-  }, [currentIndex, isLastImage, images, updateUrl, onClose])
+    transitionTo(currentIndex + 1)
+  }, [currentIndex, isLastImage, fadeIn, transitionTo, onClose])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') goToPrevious()
       if (e.key === 'ArrowRight') goToNext()
+      if (e.key === 'Escape') onClose?.()
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [goToPrevious, goToNext])
+  }, [goToPrevious, goToNext, onClose])
 
-  useEffect(() => {
-    const addedLinks: HTMLLinkElement[] = []
+  useImagePreloader({ images, currentIndex })
 
-    for (let i = 1; i <= GALLERY.PRELOAD_COUNT; i++) {
-      const nextIdx = currentIndex + i
-      const prevIdx = currentIndex - i
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }
 
-      if (nextIdx < images.length) {
-        const link = document.createElement('link')
-        link.rel = 'preload'
-        link.as = 'image'
-        link.href = optimizeGalleryUrl(images[nextIdx].secure_url)
-        document.head.appendChild(link)
-        addedLinks.push(link)
-      }
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return
+    const touchEndX = e.changedTouches[0].clientX
+    const diff = touchStartX.current - touchEndX
 
-      if (prevIdx >= 0) {
-        const link = document.createElement('link')
-        link.rel = 'preload'
-        link.as = 'image'
-        link.href = optimizeGalleryUrl(images[prevIdx].secure_url)
-        document.head.appendChild(link)
-        addedLinks.push(link)
+    if (Math.abs(diff) > SWIPE_THRESHOLD) {
+      if (diff > 0) {
+        goToNext()
+      } else {
+        goToPrevious()
       }
     }
-
-    return () => {
-      addedLinks.forEach(link => link.remove())
-    }
-  }, [currentIndex, images])
+    touchStartX.current = null
+  }
 
   const nextLabel = isLastImage ? closeLabel : 'Next image'
 
   const resetCursor = () => {
     setVariant('default')
-    setTheme('dark')
   }
 
   return (
@@ -120,94 +123,61 @@ export function Gallery({
       {!isFirstImage && (
         <button
           onClick={goToPrevious}
-          onMouseEnter={() => { setVariant('left'); setTheme('dark') }}
+          onMouseEnter={() => setVariant('left')}
           onMouseLeave={resetCursor}
-          className="fixed left-0 top-0 h-full z-20 bg-transparent"
-          style={{ width: GALLERY.SIDE_BUTTON_WIDTH }}
+          className="fixed left-0 top-0 h-full w-1/2 z-30 bg-transparent hidden md:block"
           aria-label="Previous image"
         />
       )}
 
       <button
         onClick={goToNext}
-        onMouseEnter={() => { setVariant('right'); setTheme('dark') }}
+        onMouseEnter={() => setVariant('right')}
         onMouseLeave={resetCursor}
-        className="fixed right-0 top-0 h-full z-20 bg-transparent"
-        style={{ width: GALLERY.SIDE_BUTTON_WIDTH }}
+        className="fixed right-0 top-0 h-full w-1/2 z-30 bg-transparent hidden md:block"
         aria-label={nextLabel}
       />
 
-      <div className="relative">
+      <div
+        className="relative flex flex-col items-center animate-fade-up"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div
           id={ELEMENT_IDS.SELECTED_IMAGE}
-          className="relative"
-          style={{ width: GALLERY.IMAGE_WIDTH, height: GALLERY.IMAGE_HEIGHT }}
-          onMouseEnter={() => setTheme('light')}
-          onMouseLeave={() => setTheme('dark')}
+          className="relative flex items-center justify-center"
+          style={{
+            width: GALLERY.CONTAINER_WIDTH,
+            maxWidth: `${GALLERY.CONTAINER_MAX_WIDTH}px`,
+            height: GALLERY.CONTAINER_HEIGHT,
+          }}
         >
-          <Image
-            src={optimizeGalleryUrl(currentImage.secure_url)}
-            alt={currentImage.alt}
-            fill
-            className="object-cover"
-            priority
-            unoptimized
-            placeholder="blur"
-            blurDataURL={generateBlurDataUrl(currentImage.secure_url)}
-          />
-
-          {!isFirstImage && (
-            <button
-              onClick={goToPrevious}
-              onMouseEnter={() => { setVariant('left'); setTheme('light') }}
-              onMouseLeave={() => setVariant('default')}
-              className="absolute left-0 top-0 h-full w-1/2 z-30 bg-transparent"
-              aria-label="Previous image"
-            />
-          )}
-
-          <button
-            onClick={goToNext}
-            onMouseEnter={() => { setVariant('right'); setTheme('light') }}
-            onMouseLeave={() => setVariant('default')}
-            className="absolute right-0 top-0 h-full w-1/2 z-30 bg-transparent"
-            aria-label={nextLabel}
-          />
-          {(currentImage.metadata || currentImage.caption) && (
-            <div className="absolute bottom-4 left-4 z-40 max-w-[280px] text-sm leading-tight text-background pointer-events-none">
-              {currentImage.metadata?.title && (
-                <p>{currentImage.metadata.title}</p>
-              )}
-              {currentImage.metadata?.credits && (
-                <p>
-                  {Object.entries(currentImage.metadata.credits).map(([role, name], index) => (
-                    <span key={role}>
-                      {index > 0 && ' '}
-                      <span className="underline">{role}</span>: {name}
-                    </span>
-                  ))}
-                </p>
-              )}
-              {!currentImage.metadata && currentImage.caption && (
-                <p>{currentImage.caption}</p>
-              )}
-            </div>
-          )}
-          <div className="absolute bottom-4 right-4 z-40 flex items-center gap-2">
-            <PinterestSaveButton
-              imageUrl={currentImage.secure_url}
-              pageUrl={`${SITE.url}${buildUrl(currentImage.id)}`}
-              description={`${currentImage.projectTitle} - Photography by ${SITE.name}`}
-            />
-            <FavoriteButton
-              image={{
-                id: currentImage.id,
-                secure_url: currentImage.secure_url,
-                projectSlug: currentImage.projectSlug,
-                projectTitle: currentImage.projectTitle,
-              }}
+          <div
+            className="absolute inset-0"
+            style={{
+              opacity: fadeIn ? 1 : 0,
+              transition: `opacity ${TRANSITION_DURATION / 2}ms ease-out`,
+            }}
+          >
+            <Image
+              key={displayImage.id}
+              src={displayImage.secure_url}
+              alt={displayImage.alt}
+              fill
+              className="object-contain"
+              sizes={GALLERY.SIZES}
+              priority
+              placeholder="blur"
+              blurDataURL={generateBlurDataUrl(displayImage.secure_url)}
             />
           </div>
+
+          <ImageCaption
+            metadata={displayImage.metadata}
+            caption={displayImage.caption}
+            fadeIn={fadeIn}
+            transitionDuration={TRANSITION_DURATION}
+          />
         </div>
       </div>
     </>

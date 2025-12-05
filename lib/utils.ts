@@ -3,6 +3,9 @@ export function extractImageId(publicId: string): string {
   return parts[parts.length - 1].normalize('NFC')
 }
 
-export function normalizeImageId(imageId: string): string {
-  return decodeURIComponent(imageId).normalize('NFC')
+function normalizeUrlParam(param: string): string {
+  return decodeURIComponent(param).normalize('NFC')
 }
+
+export const normalizeImageId = normalizeUrlParam
+export const normalizeSlug = normalizeUrlParam

@@ -1,9 +1,6 @@
-'use client'
-
 import Link from 'next/link'
 import Image from 'next/image'
 import { generateBlurDataUrl } from '@/lib/cloudinary'
-import { useCursor } from '@/components/cursor/CursorContext'
 
 type AspectRatio = 'card' | 'portfolio'
 
@@ -24,6 +21,7 @@ interface ImageCardProps {
   title?: string
   aspectRatio?: AspectRatio
   sizes?: string
+  priority?: boolean
 }
 
 export function ImageCard({
@@ -33,16 +31,10 @@ export function ImageCard({
   title,
   aspectRatio = 'card',
   sizes,
+  priority = false,
 }: ImageCardProps) {
-  const { setTheme } = useCursor()
-
   return (
-    <Link
-      href={href}
-      className="group block"
-      onMouseEnter={() => setTheme('light')}
-      onMouseLeave={() => setTheme('dark')}
-    >
+    <Link href={href} className="group block">
       <div className={`relative ${ASPECT_CLASSES[aspectRatio]} overflow-hidden`}>
         <Image
           src={src}
@@ -50,6 +42,7 @@ export function ImageCard({
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           sizes={sizes ?? DEFAULT_SIZES[aspectRatio]}
+          priority={priority}
           placeholder="blur"
           blurDataURL={generateBlurDataUrl(src)}
         />

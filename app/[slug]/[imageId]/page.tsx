@@ -1,11 +1,17 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getProject, getAllProjects, extractImageId, normalizeImageId } from '@/lib/services/project.service'
+import { getProject, getAllProjectsWithImages, extractImageId, normalizeImageId, normalizeSlug } from '@/lib/services/project.service'
+import { generateOGImageUrl } from '@/lib/cloudinary'
+import { getDescription } from '@/lib/cloudinary.mapper'
 import { ELEMENT_IDS } from '@/lib/gallery.constants'
 import { SITE } from '@/lib/constants'
 import { Initials } from '@/components/layout/Initials'
 import { ProjectGrid } from '@/components/project/ProjectGrid'
-import { GalleryView } from '@/components/project/GalleryView'
+import { ProjectGridSkeleton } from '@/components/project/ProjectGridSkeleton'
+import { GalleryView } from '@/components/gallery/GalleryView'
+import { GallerySkeleton } from '@/components/gallery/GallerySkeleton'
+import type { GalleryImage } from '@/components/gallery/Gallery'
 
 interface ImagePageProps {
   params: Promise<{ slug: string; imageId: string }>
@@ -13,7 +19,7 @@ interface ImagePageProps {
 
 export async function generateMetadata({ params }: ImagePageProps): Promise<Metadata> {
   const { slug: rawSlug, imageId: rawImageId } = await params
-  const slug = decodeURIComponent(rawSlug).normalize('NFC')
+  const slug = normalizeSlug(rawSlug)
   const imageId = normalizeImageId(rawImageId)
   const project = await getProject(slug)
 
@@ -29,10 +35,7 @@ export async function generateMetadata({ params }: ImagePageProps): Promise<Meta
     return { title: 'Not Found' }
   }
 
-  const ogImageUrl = selectedImage.secure_url.replace(
-    '/upload/',
-    '/upload/w_1200,h_630,c_fill,f_jpg,q_auto/'
-  )
+  const ogImageUrl = generateOGImageUrl(selectedImage.secure_url)
 
   return {
     title: project.title,
@@ -60,14 +63,8 @@ export async function generateMetadata({ params }: ImagePageProps): Promise<Meta
   }
 }
 
-export default async function ImagePage({ params }: ImagePageProps) {
-  const { slug: rawSlug, imageId: rawImageId } = await params
-  const slug = decodeURIComponent(rawSlug).normalize('NFC')
-  const imageId = normalizeImageId(rawImageId)
-  const [project, allProjects] = await Promise.all([
-    getProject(slug),
-    getAllProjects(),
-  ])
+async function GalleryViewLoader({ slug, imageId }: { slug: string; imageId: string }) {
+  const project = await getProject(slug)
 
   if (!project) {
     notFound()
@@ -81,20 +78,52 @@ export default async function ImagePage({ params }: ImagePageProps) {
     notFound()
   }
 
+  const galleryImages: GalleryImage[] = project.images.map(img => ({
+    id: extractImageId(img.public_id),
+    secure_url: img.secure_url,
+    alt: project.title,
+    caption: getDescription(img.context),
+    projectSlug: slug,
+    projectTitle: project.title,
+  }))
+
+  return (
+    <GalleryView
+      key={imageId}
+      images={galleryImages}
+      initialImageId={imageId}
+      gridElementId={ELEMENT_IDS.PROJECT_GRID}
+      closeRedirectUrl="/"
+      headerView="projects"
+      closeLabel="View projects"
+      urlPattern={`/${slug}/{id}`}
+    />
+  )
+}
+
+async function ProjectGridLoader() {
+  const projects = await getAllProjectsWithImages()
+  return <ProjectGrid projects={projects} />
+}
+
+export default async function ImagePage({ params }: ImagePageProps) {
+  const { slug: rawSlug, imageId: rawImageId } = await params
+  const slug = normalizeSlug(rawSlug)
+  const imageId = normalizeImageId(rawImageId)
+
   return (
     <>
-      <Initials initialVariant="background" />
+      <Suspense fallback={<GallerySkeleton />}>
+        <GalleryViewLoader slug={slug} imageId={imageId} />
+      </Suspense>
+
+      <Initials variant="background" />
 
       <main className="relative z-10 min-h-screen">
-        <GalleryView
-          images={project.images}
-          initialImageId={imageId}
-          projectSlug={slug}
-          projectTitle={project.title}
-        />
-
-        <section id={ELEMENT_IDS.PROJECT_GRID} className="relative z-20 px-page pb-24 pt-24">
-          <ProjectGrid projects={allProjects} />
+        <section id={ELEMENT_IDS.PROJECT_GRID} className="px-4 sm:px-8 lg:px-16 pb-24 pt-16 sm:pt-header-offset">
+          <Suspense fallback={<ProjectGridSkeleton />}>
+            <ProjectGridLoader />
+          </Suspense>
         </section>
       </main>
     </>

@@ -1,3 +1,8 @@
+export interface CloudinaryMetadata {
+  display_order?: number
+  project_order?: number
+}
+
 export interface CloudinaryResource {
   public_id: string
   secure_url: string
@@ -9,10 +14,12 @@ export interface CloudinaryResource {
   created_at: string
   bytes: number
   context?: CloudinaryContext
-  metadata?: Record<string, unknown>
+  metadata?: CloudinaryMetadata
 }
 
 export interface CloudinaryContext {
+  caption?: string
+  alt?: string
   custom?: {
     caption?: string
     alt?: string
@@ -41,7 +48,6 @@ export interface Project {
   slug: string
   title: string
   cover: CloudinaryResource | null
-  coverUrl?: string
   images: CloudinaryResource[]
 }
 
@@ -50,15 +56,23 @@ export interface ProjectSummary {
   title: string
   coverUrl?: string
   firstImageId?: string
+  order: number
 }
 
-export interface ImageTransformOptions {
-  width?: number
-  height?: number
-  crop?: 'fill' | 'fit' | 'scale' | 'thumb' | 'limit'
-  gravity?: 'auto' | 'center' | 'face' | 'faces'
-  quality?: 'auto' | 'auto:best' | 'auto:good' | 'auto:eco' | number
-  format?: 'auto' | 'webp' | 'avif' | 'jpg' | 'png'
+/**
+ * Project with all images for mobile carousel display.
+ * Used on the projects page to show horizontal swipeable galleries.
+ */
+export interface ProjectWithImages {
+  slug: string
+  title: string
+  order: number
+  images: {
+    id: string
+    url: string
+    width: number
+    height: number
+  }[]
 }
 
 export interface PortfolioImage {
@@ -69,12 +83,6 @@ export interface PortfolioImage {
   projectTitle: string
   width: number
   height: number
+  description?: string
 }
 
-export interface FavoriteImage {
-  id: string
-  secure_url: string
-  projectSlug: string
-  projectTitle: string
-  addedAt: number
-}

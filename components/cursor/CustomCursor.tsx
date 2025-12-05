@@ -3,14 +3,28 @@
 import { useEffect, useState } from 'react'
 import { useCursor } from './CursorContext'
 
-const CURSOR_SIZE = 24
+const CURSOR_SIZE = 12
 
 export function CustomCursor() {
-  const { variant, theme, visible } = useCursor()
+  const { variant, visible } = useCursor()
   const [position, setPosition] = useState({ x: -100, y: -100 })
   const [isOnScreen, setIsOnScreen] = useState(false)
+  const [isTouchDevice, setIsTouchDevice] = useState(false)
 
   useEffect(() => {
+    const checkTouchDevice = () => {
+      setIsTouchDevice(
+        'ontouchstart' in window ||
+        navigator.maxTouchPoints > 0 ||
+        window.matchMedia('(pointer: coarse)').matches
+      )
+    }
+    checkTouchDevice()
+  }, [])
+
+  useEffect(() => {
+    if (isTouchDevice) return
+
     const handleMouseMove = (e: MouseEvent) => {
       setPosition({ x: e.clientX, y: e.clientY })
       if (!isOnScreen) setIsOnScreen(true)
@@ -28,10 +42,9 @@ export function CustomCursor() {
       document.removeEventListener('mouseleave', handleMouseLeave)
       document.removeEventListener('mouseenter', handleMouseEnter)
     }
-  }, [isOnScreen])
+  }, [isOnScreen, isTouchDevice])
 
-  const circleColor = theme === 'dark' ? '#100A08' : '#FFFDF8'
-  const arrowColor = theme === 'dark' ? '#FFFDF8' : '#100A08'
+  if (isTouchDevice) return null
 
   return (
     <div
@@ -41,6 +54,7 @@ export function CustomCursor() {
         top: position.y - CURSOR_SIZE / 2,
         opacity: isOnScreen && visible ? 1 : 0,
         transition: 'opacity 0.15s ease',
+        mixBlendMode: 'difference',
       }}
     >
       <svg
@@ -54,18 +68,18 @@ export function CustomCursor() {
           cx="33.18"
           cy="33.18"
           r="32.18"
-          fill={circleColor}
+          fill="#FFFFFF"
         />
         {variant === 'left' && (
           <polygon
             points="38,22 26,33.18 38,44.36"
-            fill={arrowColor}
+            fill="#000000"
           />
         )}
         {variant === 'right' && (
           <polygon
             points="28,22 40,33.18 28,44.36"
-            fill={arrowColor}
+            fill="#000000"
           />
         )}
       </svg>

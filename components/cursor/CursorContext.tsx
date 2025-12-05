@@ -3,14 +3,11 @@
 import { createContext, useContext, useState, ReactNode } from 'react'
 
 export type CursorVariant = 'default' | 'left' | 'right'
-export type CursorTheme = 'dark' | 'light'
 
 interface CursorContextType {
   variant: CursorVariant
-  theme: CursorTheme
   visible: boolean
   setVariant: (variant: CursorVariant) => void
-  setTheme: (theme: CursorTheme) => void
   setVisible: (visible: boolean) => void
 }
 
@@ -18,11 +15,10 @@ const CursorContext = createContext<CursorContextType | null>(null)
 
 export function CursorProvider({ children }: { children: ReactNode }) {
   const [variant, setVariant] = useState<CursorVariant>('default')
-  const [theme, setTheme] = useState<CursorTheme>('dark')
   const [visible, setVisible] = useState(true)
 
   return (
-    <CursorContext.Provider value={{ variant, theme, visible, setVariant, setTheme, setVisible }}>
+    <CursorContext.Provider value={{ variant, visible, setVariant, setVisible }}>
       {children}
     </CursorContext.Provider>
   )

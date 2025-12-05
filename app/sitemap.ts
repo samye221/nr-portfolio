@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { SITE } from '@/lib/constants'
-import { getAllProjects, getAllPortfolioImages, getProjectImages } from '@/lib/services/project.service'
+import { getAllProjects, getAllPortfolioImages, getProject } from '@/lib/services/project.service'
 import { extractImageId } from '@/lib/utils'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -26,8 +26,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const projectImagePages = await Promise.all(
     projects.map(async (project) => {
-      const images = await getProjectImages(project.slug)
-      return images.map((image) => ({
+      const fullProject = await getProject(project.slug)
+      if (!fullProject) return []
+      return fullProject.images.map((image) => ({
         url: `${SITE.url}/${project.slug}/${extractImageId(image.public_id)}`,
         lastModified: new Date(),
         changeFrequency: 'monthly' as const,

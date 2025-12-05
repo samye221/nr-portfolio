@@ -5,15 +5,17 @@ import { ImageCard } from '@/components/gallery/ImageCard'
 
 interface PortfolioCardProps {
   image: PortfolioImage
+  priority?: boolean
 }
 
-export function PortfolioCard({ image }: PortfolioCardProps) {
+export function PortfolioCard({ image, priority = false }: PortfolioCardProps) {
   return (
     <ImageCard
       href={`/portfolio/${image.id}`}
       src={image.secure_url}
       alt={image.projectTitle}
       aspectRatio="portfolio"
+      priority={priority}
     />
   )
 }

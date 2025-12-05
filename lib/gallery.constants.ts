@@ -1,8 +1,14 @@
 export const GALLERY = {
-  IMAGE_WIDTH: 433,
-  IMAGE_HEIGHT: 541,
-  SIDE_BUTTON_WIDTH: 'calc(50vw - 217px)',
+  CONTAINER_WIDTH: '90vw',
+  CONTAINER_MAX_WIDTH: 1600,
+  CONTAINER_HEIGHT: '85vh',
   PRELOAD_COUNT: 3,
+  get SIZES_BREAKPOINT() {
+    return Math.round(this.CONTAINER_MAX_WIDTH / 0.9)
+  },
+  get SIZES() {
+    return `(max-width: ${this.SIZES_BREAKPOINT}px) ${this.CONTAINER_WIDTH}, ${this.CONTAINER_MAX_WIDTH}px`
+  },
 } as const
 
 export const LAYOUT = {

@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getAllPortfolioImages, normalizeImageId } from '@/lib/services/project.service'
+import { generateOGImageUrl } from '@/lib/cloudinary'
 import { ELEMENT_IDS } from '@/lib/gallery.constants'
 import { SITE } from '@/lib/constants'
 import { Initials } from '@/components/layout/Initials'
 import { PortfolioGrid } from '@/components/portfolio/PortfolioGrid'
-import { PortfolioView } from '@/components/portfolio/PortfolioView'
+import { GalleryView } from '@/components/gallery/GalleryView'
+import type { GalleryImage } from '@/components/gallery/Gallery'
 
 interface PortfolioImagePageProps {
   params: Promise<{ imageId: string }>
@@ -21,10 +23,7 @@ export async function generateMetadata({ params }: PortfolioImagePageProps): Pro
     return { title: 'Not Found' }
   }
 
-  const ogImageUrl = selectedImage.secure_url.replace(
-    '/upload/',
-    '/upload/w_1200,h_630,c_fill,f_jpg,q_auto/'
-  )
+  const ogImageUrl = generateOGImageUrl(selectedImage.secure_url)
 
   return {
     title: `${selectedImage.projectTitle} - Portfolio`,
@@ -63,17 +62,32 @@ export default async function PortfolioImagePage({ params }: PortfolioImagePageP
     notFound()
   }
 
+  const galleryImages: GalleryImage[] = allImages.map(img => ({
+    id: img.id,
+    secure_url: img.secure_url,
+    alt: img.projectTitle,
+    caption: img.description,
+    projectSlug: img.projectSlug,
+    projectTitle: img.projectTitle,
+  }))
+
   return (
     <>
-      <Initials initialVariant="background" />
+      <GalleryView
+        key={imageId}
+        images={galleryImages}
+        initialImageId={imageId}
+        gridElementId={ELEMENT_IDS.PORTFOLIO_GRID}
+        closeRedirectUrl="/portfolio"
+        headerView="portfolio"
+        closeLabel="View portfolio"
+        urlPattern="/portfolio/{id}"
+      />
+
+      <Initials variant="background" />
 
       <main className="relative z-10 min-h-screen">
-        <PortfolioView
-          images={allImages}
-          initialImageId={imageId}
-        />
-
-        <section id={ELEMENT_IDS.PORTFOLIO_GRID} className="relative z-20 px-page pb-24 pt-24">
+        <section id={ELEMENT_IDS.PORTFOLIO_GRID} className="px-4 sm:px-8 lg:px-16 pb-24 pt-16 sm:pt-header-offset">
           <PortfolioGrid images={allImages} />
         </section>
       </main>

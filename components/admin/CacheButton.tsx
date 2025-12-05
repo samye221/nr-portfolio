@@ -15,7 +15,13 @@ export function CacheButton() {
     setStatus('loading')
     const result = await revalidateCache(adminSecret)
     setStatus(result.success ? 'success' : 'error')
-    setTimeout(() => setStatus('idle'), 2000)
+    if (result.success) {
+      setTimeout(() => {
+        window.location.reload()
+      }, 500)
+    } else {
+      setTimeout(() => setStatus('idle'), 2000)
+    }
   }
 
   return (
