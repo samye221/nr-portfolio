@@ -6,7 +6,8 @@ interface ProjectPageProps {
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
-  const { slug } = await params
+  const { slug: rawSlug } = await params
+  const slug = decodeURIComponent(rawSlug).normalize('NFC')
   const project = await getProject(slug)
 
   if (!project) {

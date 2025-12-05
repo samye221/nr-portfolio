@@ -1,6 +1,9 @@
 import { unstable_cache } from 'next/cache'
-import { cloudinary, CLOUDINARY_FOLDERS } from '@/lib/cloudinary'
-import type { CloudinaryResource, Project, ProjectSummary } from '@/types'
+import { cloudinary, CLOUDINARY_FOLDERS } from '@/lib/cloudinary.server'
+import { extractImageId, normalizeImageId } from '@/lib/utils'
+import type { CloudinaryResource, Project, ProjectSummary, PortfolioImage } from '@/types/cloudinary'
+
+export { extractImageId, normalizeImageId }
 
 const CACHE_REVALIDATE = 60 * 60 * 24 * 7 // 7 days
 export const CACHE_TAG = 'cloudinary-data'
@@ -10,11 +13,6 @@ function formatTitle(slug: string): string {
     .split('-')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
-}
-
-export function extractImageId(publicId: string): string {
-  const parts = publicId.split('/')
-  return parts[parts.length - 1]
 }
 
 const fetchProjectImages = async (projectSlug: string): Promise<CloudinaryResource[]> => {
@@ -79,10 +77,11 @@ const getCachedProjectFolders = unstable_cache(
 )
 
 export async function getProject(projectSlug: string): Promise<Project | null> {
+  const normalizedSlug = projectSlug.normalize('NFC')
   try {
     const [images, cover] = await Promise.all([
-      getProjectImages(projectSlug),
-      getProjectCover(projectSlug),
+      getProjectImages(normalizedSlug),
+      getProjectCover(normalizedSlug),
     ])
 
     if (images.length === 0 && !cover) {
@@ -135,6 +134,37 @@ export async function getProjectSlugs(): Promise<string[]> {
     return folders.map((folder) => folder.name)
   } catch (error) {
     console.error('Error fetching project slugs:', error)
+    return []
+  }
+}
+
+export async function getAllPortfolioImages(): Promise<PortfolioImage[]> {
+  try {
+    const folders = await getCachedProjectFolders()
+
+    const allImages = await Promise.all(
+      folders.map(async (folder) => {
+        const [images, cover] = await Promise.all([
+          getProjectImages(folder.name),
+          getProjectCover(folder.name),
+        ])
+        const title = cover?.context?.custom?.alt || formatTitle(folder.name)
+
+        return images.map((image) => ({
+          id: extractImageId(image.public_id),
+          public_id: image.public_id,
+          secure_url: image.secure_url,
+          projectSlug: folder.name,
+          projectTitle: title,
+          width: image.width,
+          height: image.height,
+        }))
+      })
+    )
+
+    return allImages.flat()
+  } catch (error) {
+    console.error('Error fetching portfolio images:', error)
     return []
   }
 }

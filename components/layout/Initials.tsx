@@ -1,6 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
+import { getCloudinaryUrl } from '@/lib/cloudinary'
+import { SITE } from '@/lib/constants'
 
 interface InitialsProps {
   initialVariant: 'foreground' | 'background'
@@ -10,24 +13,44 @@ export function Initials({ initialVariant }: InitialsProps) {
   const [isAtGrid, setIsAtGrid] = useState(false)
 
   useEffect(() => {
+    if (initialVariant === 'foreground') return
+
     const handleScroll = () => {
-      const gridThreshold = window.innerHeight * 0.8
-      setIsAtGrid(window.scrollY > gridThreshold)
+      const selectedImage = document.getElementById('selected-image')
+
+      if (selectedImage) {
+        const imageRect = selectedImage.getBoundingClientRect()
+        const viewportCenter = window.innerHeight / 2
+        setIsAtGrid(imageRect.bottom < viewportCenter)
+      }
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [initialVariant])
 
-  const zIndex = initialVariant === 'foreground' || isAtGrid ? 'z-30' : 'z-0'
+  const getZIndex = () => {
+    if (initialVariant === 'foreground') return 'z-30'
+    return isAtGrid ? 'z-30' : 'z-0'
+  }
+
+  const logoUrl = getCloudinaryUrl(SITE.logo.publicId, 'f_svg')
 
   return (
-    <div className={`pointer-events-none fixed inset-0 flex items-center justify-center ${zIndex}`}>
-      <span className="font-script text-[25rem] leading-none text-foreground">
-        <span>n</span>
-        <span className="inline-block w-96" />
-        <span>r</span>
-      </span>
+    <div
+      className={`pointer-events-none fixed inset-0 flex items-center justify-center transition-none ${getZIndex()}`}
+    >
+      <div className="relative h-[400px] w-[600px]">
+        <Image
+          src={logoUrl}
+          alt={SITE.logo.alt}
+          fill
+          className="object-contain"
+          priority
+          unoptimized
+        />
+      </div>
     </div>
   )
 }

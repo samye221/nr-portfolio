@@ -17,6 +17,7 @@ export interface CloudinaryContext {
     caption?: string
     alt?: string
     order?: string
+    credits?: string
   }
 }
 
@@ -58,4 +59,14 @@ export interface ImageTransformOptions {
   gravity?: 'auto' | 'center' | 'face' | 'faces'
   quality?: 'auto' | 'auto:best' | 'auto:good' | 'auto:eco' | number
   format?: 'auto' | 'webp' | 'avif' | 'jpg' | 'png'
+}
+
+export interface PortfolioImage {
+  id: string
+  public_id: string
+  secure_url: string
+  projectSlug: string
+  projectTitle: string
+  width: number
+  height: number
 }

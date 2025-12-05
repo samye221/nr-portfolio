@@ -1,4 +1,4 @@
-import type { ProjectSummary } from '@/types'
+import type { ProjectSummary } from '@/types/cloudinary'
 import { ProjectCard } from './ProjectCard'
 
 interface ProjectGridProps {

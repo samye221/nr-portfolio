@@ -19,12 +19,14 @@ const config: Config = {
       },
       fontSize: {
         base: ['14px', { lineHeight: '100%', letterSpacing: '0%' }],
+        label: ['11px', { lineHeight: '100%', letterSpacing: '0%' }],
       },
       spacing: {
         'page': '71px',
         'header': '46px',
-        'grid-gap': '15px',
-        'label-gap': '22px',
+        'grid-gap': '30px',
+        'grid-gap-sm': '10px',
+        'label-gap': '10px',
       },
       width: {
         'card': '433px',
@@ -39,6 +41,7 @@ const config: Config = {
       aspectRatio: {
         'card': '433 / 541',
         'card-lg': '866 / 1082',
+        'portfolio': '3 / 4',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',

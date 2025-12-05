@@ -1,141 +1,79 @@
-# NR - Photography Portfolio
+# NR Portfolio
 
-Elegant and minimalist photography portfolio for luxury & fashion photographer.
+Minimalist photography portfolio for Nathan Robin, a luxury & fashion photographer.
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 (App Router)
+- **Framework**: Next.js 15 (App Router) with React 19
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **Animations**: Framer Motion
-- **Images**: Cloudinary + next-cloudinary
+- **Images**: Cloudinary (Node SDK)
 - **Hosting**: Vercel
+
+## Features
+
+- **Dual Navigation**: Toggle between Projects view (grouped by project) and Portfolio view (all images)
+- **Gallery**: Full-screen image viewer with keyboard navigation and swipe support
+- **Custom Cursor**: Branded cursor with contextual states
+- **SEO Optimized**: Dynamic metadata, Open Graph images, structured data
+- **Responsive**: Mobile-first design with fluid typography
 
 ## Installation
 
 ```bash
-# Install dependencies
-npm install
+pnpm install
 
-# Copy environment variables
 cp .env.example .env.local
-
-# Configure your Cloudinary credentials in .env.local
 ```
 
-## Environment Variables
-
-### GitHub Secrets (already configured)
-- `CLOUDINARY_CLOUD_NAME`: Cloudinary cloud name
-- `CLOUDINARY_API_KEY`: Cloudinary API key
-- `CLOUDINARY_API_SECRET`: Cloudinary API secret
-
-### Local (.env.local)
-Use the same variable names for local development.
+Configure Cloudinary credentials in `.env.local`:
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
 
 ## Development
 
 ```bash
-# Start development server
-npm run dev
-
-# Production build
-npm run build
-
-# Start production server
-npm run start
-
-# Lint
-npm run lint
-
-# Format code
-npm run format
+pnpm dev         # Start dev server (Turbopack) at http://localhost:3000
+pnpm build       # Production build
+pnpm start       # Start production server
+pnpm lint        # Lint code
+pnpm format      # Format code with Prettier
 ```
-
-Site will be available at [http://localhost:3000](http://localhost:3000)
 
 ## Project Structure
 
 ```
 nr-portfolio/
-├── app/                    # Next.js pages (App Router)
-│   ├── layout.tsx         # Root layout
-│   ├── page.tsx           # Home page
+├── app/                    # Next.js App Router pages
+│   ├── [slug]/            # Project routes
+│   ├── portfolio/         # Portfolio routes
 │   └── globals.css        # Global styles
-├── components/            # React components
-│   ├── layout/           # Layout components
-│   ├── gallery/          # Gallery components
-│   ├── ui/               # Reusable UI components
-│   └── contact/          # Contact form components
-├── lib/                   # Utilities and configurations
-│   ├── cloudinary.ts     # Cloudinary config (client)
-│   └── cloudinary-server.ts # Cloudinary API (server)
-├── types/                 # TypeScript types
-│   ├── image.ts
-│   └── project.ts
-└── public/               # Static assets
-    ├── fonts/
-    └── images/
+├── components/
+│   ├── cursor/            # Custom cursor system
+│   ├── gallery/           # Image gallery components
+│   ├── layout/            # Header, Initials
+│   ├── portfolio/         # Portfolio-specific components
+│   └── project/           # Project-specific components
+├── lib/
+│   ├── services/          # Cloudinary data fetching
+│   └── constants.ts       # Site configuration
+└── types/                 # TypeScript definitions
 ```
 
-## Cloudinary Configuration
+## Cloudinary Setup
 
-### Folder Structure
-
+Images are organized in folders per project:
 ```
 nr-portfolio/
-├── projects/
-│   ├── chanel-2024/
-│   │   ├── cover.jpg
-│   │   ├── 001.jpg
-│   │   └── 002.jpg
-│   └── dior-fw23/
-│       └── ...
-└── portfolio/
-    ├── img-001.jpg
-    └── img-002.jpg
+└── projects/
+    ├── project-slug/
+    │   ├── image-001.jpg
+    │   └── image-002.jpg
+    └── another-project/
 ```
 
-### Naming Convention
-
-- **Projects**: `projects/{slug}/{number}.{ext}`
-- **Project cover**: `projects/{slug}/cover.{ext}`
-- **Portfolio**: `portfolio/{id}.{ext}`
-
-## Deployment
-
-### Vercel (Recommended)
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-
-# Environment variables (already configured in GitHub)
-# Vercel will automatically sync them from GitHub
-
-# Production deployment
-vercel --prod
-```
-
-### Automatic Configuration
-
-Vercel automatically detects Next.js and configures:
-- Optimized build
-- Global edge CDN
-- Automatic HTTPS
-- Image optimization
-- Brotli compression
-
-## Performance
-
-- **SSR/SSG**: Pre-rendered pages for optimal SEO
-- **Image Optimization**: Cloudinary + Next.js Image
-- **Lazy Loading**: On-demand image loading
-- **Modern Formats**: Automatic WebP/AVIF
-- **Optimized Bundle**: Code splitting per route
+Image metadata (caption, credits, alt text) is managed via Cloudinary context fields.
 
 ## License
 

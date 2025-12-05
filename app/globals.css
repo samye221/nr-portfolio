@@ -18,9 +18,26 @@
 
   body {
     @apply bg-background text-foreground antialiased font-mono text-base;
+    cursor: none;
   }
 
   html {
     scroll-behavior: smooth;
+  }
+
+  *:not([style*="cursor"]):not(.cursor-auto):not(.cursor-auto *), *::before, *::after {
+    cursor: none;
+  }
+
+  .cursor-auto,
+  .cursor-auto * {
+    cursor: auto;
+  }
+
+  .cursor-auto a,
+  .cursor-auto a *,
+  .cursor-auto button,
+  .cursor-auto button * {
+    cursor: pointer;
   }
 }
